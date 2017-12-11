@@ -1,0 +1,55 @@
+---
+
+- name: Docker setup automation on Centos
+  hosts: dockers
+  become: true
+  gather_facts: false
+  tasks:
+
+    - name: Install docker
+      yum: name=docker state=latest update_cache=yes
+      notify: Restart Docker
+
+    - name: Docker add http_proxy
+      lineinfile: dest='/etc/sysconfig/docker' regexp='HTTP_PROXY=' line='HTTP_PROXY={{ http_proxy }}' state=present
+      when: http_proxy is defined 
+      notify: Restart Docker
+
+    - name: Docker remove http_proxy
+      lineinfile: dest='/etc/sysconfig/docker' regexp='HTTP_PROXY=' state=absent
+      when: http_proxy is not defined 
+      notify: Restart Docker
+
+    - name: Docker add https_proxy
+      lineinfile: dest='/etc/sysconfig/docker' regexp='HTTPS_PROXY=' line='HTTPS_PROXY={{ https_proxy }}' state=present
+      when: https_proxy is defined 
+      notify: Restart Docker
+
+    - name: Docker remove https_proxy
+      lineinfile: dest='/etc/sysconfig/docker' regexp='HTTPS_PROXY=' state=absent
+      when: https_proxy is not defined 
+      notify: Restart Docker
+
+    - name: Docker add no_proxy
+      lineinfile: dest='/etc/sysconfig/docker' regexp='NO_PROXY=' line='NO_PROXY="{{ no_proxy }}"' state=present
+      when: no_proxy is defined 
+      notify: Restart Docker
+
+    - name: Docker remove no_proxy
+      lineinfile: dest='/etc/sysconfig/docker' regexp='NO_PROXY=' state=absent
+      when: no_proxy is not defined 
+      notify: Restart Docker
+
+    - name: Enabling Docker service
+      service: name=docker enabled=yes
+      notify: Restart Docker
+
+    - name: Changing docker/daemon.json - graph option
+      template: src=daemon.json.j2 dest=/etc/docker/daemon.json owner=root
+      notify: Restart Docker
+
+  handlers:
+    - name: Restart Docker
+      service: name=docker state=restarted
+
+  

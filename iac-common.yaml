@@ -1,0 +1,46 @@
+---
+
+- name: IaC automation common steps (proxy configuration, update all packages)
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Check if proxy definition exists
+      stat:
+        path: '{{ proxy_file_location }}'
+      register: proxy_file_stat_result
+
+    - name: Copy the proxy file template
+      copy: content='\n' dest='{{ proxy_file_location }}'
+      when: proxy_file_stat_result.stat.exists == False
+
+    - name: Environment file - add empty line if empty file
+      lineinfile: dest='{{ proxy_file_location }}' regexp='^$' line='' state=present
+
+    - name: proxy add http_proxy
+      lineinfile: dest='{{ proxy_file_location }}' regexp='http_proxy=' line='http_proxy={{ http_proxy }}' state=present
+      when: http_proxy is defined 
+
+    - name: proxy remove http_proxy
+      lineinfile: dest='{{ proxy_file_location }}' regexp='http_proxy=' state=absent
+      when: http_proxy is not defined 
+
+    - name: proxy add https_proxy
+      lineinfile: dest='{{ proxy_file_location }}' regexp='https_proxy=' line='https_proxy={{ https_proxy }}' state=present
+      when: https_proxy is defined 
+
+    - name: proxy remove https_proxy
+      lineinfile: dest='{{ proxy_file_location }}' regexp='https_proxy=' state=absent
+      when: https_proxy is not defined 
+
+    - name: proxy add no_proxy
+      lineinfile: dest='{{ proxy_file_location }}' regexp='no_proxy=' line='no_proxy="{{ no_proxy }}"' state=present
+      when: no_proxy is defined 
+
+    - name: proxy remove no_proxy
+      lineinfile: dest='{{ proxy_file_location }}' regexp='no_proxy=' state=absent
+      when: no_proxy is not defined 
+
+    - name: Update all packages (yum -y update)
+      yum: name=* state=latest update_cache=yes
+

@@ -1,0 +1,44 @@
+---
+driver:
+  name: docker
+
+provisioner:
+  name: ansible_push
+  chef_bootstrap_url: nil
+#  ansible_config: "test/ansible.cfg"
+#  idempotency_test: true
+  mygroup: dockers
+
+platforms:
+  - name: centos-7.3
+    driver_config:
+      http_proxy: <%= ENV['http_proxy'] %>
+      https_proxy: <%= ENV['https_proxy'] %>
+
+      image: centos/systemd:latest
+      platform: centos
+
+#      use_cache: false
+
+#below 6 lines required for having systemd in docker
+      privileged: true
+      run_options: -v /sys/fs/cgroup:/sys/fs/cgroup:ro
+      run_command: /usr/sbin/init
+      provision_command:
+        - "sed -i 's/UsePAM yes$/UsePAM no/' /etc/ssh/sshd_config"
+        - yum install -y initscripts
+        - yum install -y gem
+#the last line is required by serverspec (only when chef installing is disabled)
+
+
+# must be set as we do not install chef (it has embedded ruby)
+verifier:
+  ruby_bindir: '/usr/bin'
+
+
+suites:
+  - name: default
+    run_list:
+    attributes:
+    provisioner:
+      playbook: "test/integration/default/default.yml"

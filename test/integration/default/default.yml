@@ -1,0 +1,23 @@
+---
+- name: Preparation for test - loading config file
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Loading vars for the tested yaml file
+      include_vars:
+        file: "../../../group_vars/all"
+
+    - name: Removing fastestmirrors
+      lineinfile: dest='/etc/yum/pluginconf.d/fastestmirror.conf' regexp='enabled=' line='enabled=0' state=present
+      become: true
+
+    - name: Fix for docker
+      template: src=loop.sh.j2 dest=/tmp/loop.sh
+
+    - name: Fix for docker - step 2
+      shell: 'sh /tmp/loop.sh'
+      become: true
+
+- include: ../../../iac-common.yaml
+- include: ../../../docker-setup.yaml
+

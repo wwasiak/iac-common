@@ -1,0 +1,9 @@
+#proxy file location
+proxy_file_location: /etc/environment
+
+#proxy server lines - each can be commented out
+#http_proxy: "http://web-proxy:8080"
+#https_proxy: "http://web-proxy:8080"
+#no_proxy: "localhost,127.0.0.1"
+
+docker_daemon_graph: /opt/mount1/docker
